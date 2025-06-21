@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V.R.V.D.Bhavani - Interactive Resume</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 1s ease-out;
+        }
+
+        .bird-button {
+            width: 120px;
+            height: 120px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .bird-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .bird-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            color: white;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .intro-text {
+            color: white;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .intro-text h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .intro-text p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        #resume-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            overflow-y: auto;
+            z-index: 20;
+            padding: 20px;
+        }
+
+        .resume-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .resume-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            animation: stars 20s linear infinite;
+        }
+
+        @keyframes stars {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100px); }
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .profile-name {
+            font-size: 3.5rem;
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: slideInDown 1s ease-out;
+        }
+
+        .profile-title {
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 20px;
+            animation: slideInUp 1s ease-out 0.2s both;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+
+        .contact-item {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .section {
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            animation: slideInLeft 1s ease-out;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-radius: 2px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .content-card {
+            background: rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+            animation: slideInUp 1s ease-out;
+        }
+
+        .content-card:hover {
+            transform: translateY(-10px) rotateX(5deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .card-content {
+            color: rgba(255,255,255,0.9);
+            line-height: 1.6;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .skill-item {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            transform: scale(0);
+            animation: popIn 0.5s ease-out forwards;
+        }
+
+        .skill-item:nth-child(1) { animation-delay: 0.1s; }
+        .skill-item:nth-child(2) { animation-delay: 0.2s; }
+        .skill-item:nth-child(3) { animation-delay: 0.3s; }
+        .skill-item:nth-child(4) { animation-delay: 0.4s; }
+        .skill-item:nth-child(5) { animation-delay: 0.5s; }
+        .skill-item:nth-child(6) { animation-delay: 0.6s; }
+        .skill-item:nth-child(7) { animation-delay: 0.7s; }
+
+        .close-btn {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            z-index: 30;
+        }
+
+        .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        @keyframes slideInDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            from { transform: translateX(-50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes popIn {
+            to { transform: scale(1); }
+        }
+
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255,255,255,0.1);
+            animation: floatShape 15s linear infinite;
+        }
+
+        .shape:nth-child(1) {
+            width: 20px;
+            height: 20px;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 30px;
+            height: 30px;
+            left: 20%;
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            width: 25px;
+            height: 25px;
+            left: 30%;
+            animation-delay: 4s;
+        }
+
+        @keyframes floatShape {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-name { font-size: 2.5rem; }
+            .contact-info { flex-direction: column; align-items: center; }
+            .content-grid { grid-template-columns: 1fr; }
+            .resume-content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div id="intro-screen">
+        <div class="intro-text">
+            <h1>V.R.V.D.Bhavani</h1>
+            <p>Full Stack Developer & Tech Enthusiast</p>
+        </div>
+        <button class="bird-button" onclick="startJourney()">
+            <div class="bird-icon">🚀</div>
+        </button>
+    </div>
+
+    <div id="resume-container">
+        <button class="close-btn" onclick="closeResume()">&times;</button>
+        
+        <div class="resume-content">
+            <div class="header-section">
+                <h1 class="profile-name">V.R.V.D.Bhavani</h1>
+                <p class="profile-title">Full Stack Developer | BSc Mathematics Honours</p>
+                <div class="contact-info">
+                    <div class="contact-item">📍 Narasapuram, Korukunda</div>
+                    <div class="contact-item">🎓 Govt Degree College (A) Rajamundry</div>
+                    <div class="contact-item">💻 Full Stack Developer</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Technical Skills</h2>
+                <div class="skills-grid">
+                    <div class="skill-item">Git & GitHub</div>
+                    <div class="skill-item">HTML</div>
+                    <div class="skill-item">CSS</div>
+                    <div class="skill-item">JavaScript</div>
+                    <div class="skill-item">Node.js</div>
+                    <div class="skill-item">MongoDB</div>
+                    <div class="skill-item">Full Stack</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Education & Experience</h2>
+                <div class="content-grid">
+                    <div class="content-card">
+                        <h3 class="card-title">Current Education</h3>
+                        <div class="card-content">
+                            <p><strong>BSc Mathematics Honours (3rd Year)</strong></p>
+                            <p>Government Degree College (A), Rajamundry</p>
+                            <br>
+                            <p><strong>Intermediate:</strong> Srujana Model Junior College</p>
+                            <p><strong>SSC:</strong> Z P High School Narasapuram</p>
+                        </div>
+                    </div>
+                    
+                    <div class="content-card">
+                        <h3 class="card-title">Professional Experience</h3>
+                        <div class="card-content">
+                            <p><strong>IT Global Internship - Full Stack Development</strong></p>
+                            <p>Gained hands-on experience with end-to-end web development and deployment</p>
+                            <br>
+                            <p><strong>CID Agrigold Internship</strong></p>
+                            <p>Worked on software and tech exposure in agricultural use-cases</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Featured Projects</h2>
+                <div class="content-grid">
+                    <div class="content-card">
+                        <h3 class="card-title">Bhavani Movie Tickets</h3>
+                        <div class="card-content">
+                            <p>Online Movie Ticket Booking System</p>
+                            <p>Developed a full-stack website using modern technologies with user-friendly features and responsive design.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="content-card">
+                        <h3 class="card-title">Portfolio Website</h3>
+                        <div class="card-content">
+                            <p>Personal Portfolio Showcase</p>
+                            <p>Created using HTML, CSS, and JavaScript to showcase projects and technical skills effectively.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Strengths & Interests</h2>
+                <div class="content-grid">
+                    <div class="content-card">
+                        <h3 class="card-title">Core Strengths</h3>
+                        <div class="card-content">
+                            <p>• Self-motivated and eager to learn new technologies</p>
+                            <p>• Passion for practical implementation and real-world projects</p>
+                            <p>• Strong analytical, communication, and problem-solving skills</p>
+                        </div>
+                    </div>
+                    
+                    <div class="content-card">
+                        <h3 class="card-title">Personal Interests</h3>
+                        <div class="card-content">
+                            <p>• Reading books and continuous learning</p>
+                            <p>• Browsing the internet for tech updates</p>
+                            <p>• Drawing and creative expression</p>
+                            <p>• Watching educational content</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scene, camera, renderer, cityscape = [];
+        let animationPhase = 'intro';
+        let animationStartTime = 0;
+
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Create cityscape
+            createCityscape();
+            
+            // Set initial camera position
+            camera.position.set(0, 50, 100);
+            camera.lookAt(0, 0, 0);
+
+            animate();
+        }
+
+        function createCityscape() {
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            
+            for (let i = 0; i < 50; i++) {
+                const height = Math.random() * 20 + 5;
+                const width = Math.random() * 3 + 1;
+                const depth = Math.random() * 3 + 1;
+                
+                const material = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color().setHSL(0.6 + Math.random() * 0.2, 0.7, 0.5 + Math.random() * 0.3),
+                    wireframe: true
+                });
+                
+                const building = new THREE.Mesh(geometry, material);
+                building.scale.set(width, height, depth);
+                building.position.set(
+                    (Math.random() - 0.5) * 100,
+                    height / 2,
+                    (Math.random() - 0.5) * 100
+                );
+                
+                scene.add(building);
+                cityscape.push(building);
+            }
+
+            // Add ambient lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            // Add point light
+            const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+            pointLight.position.set(10, 10, 10);
+            scene.add(pointLight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (animationPhase === 'flying') {
+                const elapsed = (Date.now() - animationStartTime) / 1000;
+                const duration = 3;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Camera flight path
+                const startPos = { x: 0, y: 50, z: 100 };
+                const endPos = { x: 0, y: 5, z: 20 };
+                
+                camera.position.x = startPos.x + (endPos.x - startPos.x) * progress;
+                camera.position.y = startPos.y + (endPos.y - startPos.y) * progress;
+                camera.position.z = startPos.z + (endPos.z - startPos.z) * progress;
+                
+                camera.lookAt(0, 0, 0);
+
+                if (progress >= 1) {
+                    animationPhase = 'landed';
+                    setTimeout(showResume, 500);
+                }
+            }
+
+            // Rotate buildings
+            cityscape.forEach((building, index) => {
+                building.rotation.y += 0.005 + index * 0.0001;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        function startJourney() {
+            document.getElementById('intro-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('intro-screen').style.display = 'none';
+            }, 1000);
+
+            animationPhase = 'flying';
+            animationStartTime = Date.now();
+        }
+
+        function showResume() {
+            document.getElementById('resume-container').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('resume-container').style.opacity = '1';
+            }, 100);
+        }
+
+        function closeResume() {
+            document.getElementById('resume-container').style.display = 'none';
+            document.getElementById('intro-screen').style.display = 'flex';
+            document.getElementById('intro-screen').style.opacity = '1';
+            animationPhase = 'intro';
+            
+            // Reset camera position
+            camera.position.set(0, 50, 100);
+            camera.lookAt(0, 0, 0);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize everything when page loads
+        window.addEventListener('load', initThreeJS);
+    </script>
+</body>
+</html>
